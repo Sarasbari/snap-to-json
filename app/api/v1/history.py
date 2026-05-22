@@ -1,6 +1,9 @@
+import logging
 from fastapi import APIRouter, Query, HTTPException, status
 from app.schemas.response import APIResponse
 from app.db import supabase_client as db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -17,6 +20,7 @@ async def get_history(limit: int = Query(default=20, ge=1, le=100)):
             error=None
         )
     except Exception as e:
+        logger.exception("Failed to retrieve history")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve history: {str(e)}"
@@ -42,6 +46,7 @@ async def get_extraction(extraction_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("Failed to retrieve extraction")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve extraction: {str(e)}"

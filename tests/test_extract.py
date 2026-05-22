@@ -8,7 +8,7 @@ client = TestClient(app)
 def test_read_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert "Welcome" in response.json()["message"]
+    assert "snap-to-json" in response.text
 
 def test_extract_success():
     # Mock extract_invoice_data returning a valid raw JSON string

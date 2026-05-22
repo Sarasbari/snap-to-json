@@ -117,3 +117,67 @@ async def test_get_extraction_by_id_not_found():
         
         # Verify result is None
         assert result is None
+
+@pytest.mark.asyncio
+async def test_save_extraction_fallback():
+    from app.db.supabase_client import _in_memory_db
+    _in_memory_db.clear()
+    
+    invoice = InvoiceData(
+        vendor="Fallback Vendor",
+        invoice_number="INV-456",
+        invoice_date="2026-05-22",
+        due_date="2026-06-22",
+        total_amount=100.0,
+        subtotal=90.0,
+        tax_amount=10.0,
+        currency="USD",
+        line_items=[],
+        confidence_score=0.7
+    )
+    
+    # Force get_supabase_client to raise an exception
+    with patch("app.db.supabase_client.get_supabase_client", side_effect=Exception("Connection refused")):
+        result = await save_extraction("fallback.png", invoice)
+        
+        # Verify fallback result
+        assert result["filename"] == "fallback.png"
+        assert result["vendor"] == "Fallback Vendor"
+        assert "id" in result
+        
+        # Verify it was added to in-memory db
+        assert len(_in_memory_db) == 1
+        assert _in_memory_db[0]["vendor"] == "Fallback Vendor"
+
+@pytest.mark.asyncio
+async def test_get_extractions_fallback():
+    from app.db.supabase_client import _in_memory_db
+    _in_memory_db.clear()
+    
+    # Pre-populate in-memory db
+    dummy_item = {"id": "dummy-1", "filename": "dummy1.png", "vendor": "Dummy"}
+    _in_memory_db.append(dummy_item)
+    
+    with patch("app.db.supabase_client.get_supabase_client", side_effect=Exception("Connection refused")):
+        result = await get_extractions(limit=5)
+        
+        # Verify it returned the item from in-memory db
+        assert result == [dummy_item]
+
+@pytest.mark.asyncio
+async def test_get_extraction_by_id_fallback():
+    from app.db.supabase_client import _in_memory_db
+    _in_memory_db.clear()
+    
+    dummy_item = {"id": "target-uuid", "filename": "target.png", "vendor": "Target"}
+    _in_memory_db.append(dummy_item)
+    
+    with patch("app.db.supabase_client.get_supabase_client", side_effect=Exception("Connection refused")):
+        # 1. Test found in memory
+        result_found = await get_extraction_by_id("target-uuid")
+        assert result_found == dummy_item
+        
+        # 2. Test not found in memory
+        result_not_found = await get_extraction_by_id("non-existent-uuid")
+        assert result_not_found is None
+
