@@ -1,27 +1,31 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.extract import router as extract_router
-from app.api.v1.history import router as history_router
+from app.config import settings
+from app.api.v1 import router as v1_router
 
 app = FastAPI(
-    title="Snap to JSON API",
-    description="FastAPI backend to parse invoices into JSON using Gemini Vision API and Supabase.",
-    version="1.0.0"
+    title="snap-to-json"
 )
 
-# CORS configurations
+# CORS enabled for all origins (dev mode)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Set to specific domains in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include API routers
-app.include_router(extract_router, prefix="/api/v1", tags=["extract"])
-app.include_router(history_router, prefix="/api/v1", tags=["history"])
+# Register endpoints under /api/v1 prefix
+app.include_router(v1_router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
     return {"message": "Welcome to Snap to JSON API. The service is running."}
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "env": settings.APP_ENV
+    }
