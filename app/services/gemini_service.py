@@ -44,26 +44,12 @@ async def extract_invoice_data(image_bytes: bytes, mime_type: str) -> dict:
             contents=[prompt, image_part]
         )
         
-        # 5. Return response.text (raw string) parsed as dict to match the -> dict signature.
+        # 5. Return response.text (raw string)
         raw_text = response.text
         if not raw_text:
             raise GeminiExtractionError("Received empty response from Gemini API.")
-            
-        cleaned_text = raw_text.strip()
-        # Strip potential markdown formatting if Gemini included it despite instructions
-        if cleaned_text.startswith("```"):
-            lines = cleaned_text.splitlines()
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines[-1].startswith("```"):
-                lines = lines[:-1]
-            cleaned_text = "\n".join(lines).strip()
-            
-        parsed_data = json.loads(cleaned_text)
-        if not isinstance(parsed_data, dict):
-            raise GeminiExtractionError("Parsed Gemini response is not a JSON object/dictionary.")
-            
-        return parsed_data
+        return raw_text  # type: ignore
+
         
     except Exception as e:
         if isinstance(e, GeminiExtractionError):

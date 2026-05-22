@@ -38,11 +38,11 @@ async def test_extract_invoice_data_success():
         assert contents[1]["inline_data"]["mime_type"] == "image/png"
         assert isinstance(contents[1]["inline_data"]["data"], str)
         
-        # Verify 5. Return dict parsed from response.text
-        assert result == {"vendor": "Mock Vendor", "invoice_number": "INV-100", "total_amount": 150.0}
+        # Verify 5. Return response.text (raw string)
+        assert result == '{"vendor": "Mock Vendor", "invoice_number": "INV-100", "total_amount": 150.0}'
 
 @pytest.mark.asyncio
-async def test_extract_invoice_data_markdown_strip():
+async def test_extract_invoice_data_raw_string():
     mock_response = MagicMock()
     mock_response.text = '```json\n{"vendor": "Cleaned Vendor"}\n```'
     
@@ -53,7 +53,7 @@ async def test_extract_invoice_data_markdown_strip():
          patch("google.generativeai.configure"):
          
         result = await extract_invoice_data(b"dummy image", "image/jpeg")
-        assert result == {"vendor": "Cleaned Vendor"}
+        assert result == '```json\n{"vendor": "Cleaned Vendor"}\n```'
 
 @pytest.mark.asyncio
 async def test_extract_invoice_data_exception_handling():
@@ -68,3 +68,4 @@ async def test_extract_invoice_data_exception_handling():
             await extract_invoice_data(b"dummy image", "image/png")
             
         assert "Error during Gemini extraction" in str(exc_info.value)
+
