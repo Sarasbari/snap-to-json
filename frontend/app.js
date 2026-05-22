@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         historyList.innerHTML = result.data.map(invoice => `
           <tr class="hover:bg-slate-800/40 transition-colors">
             <td class="py-3 px-4 font-mono text-xs text-indigo-400">${invoice.invoice_number || 'N/A'}</td>
-            <td class="py-3 px-4 font-medium">${invoice.vendor_name || 'N/A'}</td>
+            <td class="py-3 px-4 font-medium">${invoice.vendor || invoice.vendor_name || 'N/A'}</td>
             <td class="py-3 px-4 font-mono">$${invoice.total_amount !== null && invoice.total_amount !== undefined ? invoice.total_amount.toFixed(2) : '0.00'}</td>
             <td class="py-3 px-4 font-mono">$${invoice.tax_amount !== null && invoice.tax_amount !== undefined ? invoice.tax_amount.toFixed(2) : '0.00'}</td>
             <td class="py-3 px-4">

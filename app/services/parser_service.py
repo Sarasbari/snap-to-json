@@ -8,6 +8,6 @@ class ParserService:
         # Stub implementation
         return InvoiceData(
             invoice_number="INV-STUB",
-            vendor_name="Stub Vendor",
+            vendor="Stub Vendor",
             line_items=[]
         )

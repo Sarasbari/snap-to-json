@@ -14,12 +14,12 @@ async def get_history():
     stub_list = [
         InvoiceData(
             invoice_number="INV-STUB-001",
-            vendor_name="Acme Corp",
+            vendor="Acme Corp",
             line_items=[]
         )
     ]
     return APIResponse(
         success=True,
-        message="History retrieved successfully (Stub)",
-        data=stub_list
+        data=stub_list,
+        processing_time_ms=45.2
     )

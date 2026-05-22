@@ -12,11 +12,11 @@ async def extract_invoice(file: UploadFile = File(...)):
     # Stub response
     stub_data = InvoiceData(
         invoice_number="INV-STUB-123",
-        vendor_name="Stub Vendor Inc.",
+        vendor="Stub Vendor Inc.",
         line_items=[]
     )
     return APIResponse(
         success=True,
-        message="Invoice extracted successfully (Stub)",
-        data=stub_data
+        data=stub_data,
+        processing_time_ms=120.5
     )
