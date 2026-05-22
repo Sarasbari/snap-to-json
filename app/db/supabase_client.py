@@ -65,3 +65,21 @@ async def get_extractions(limit: int = 20) -> list:
     
     return response.data
 
+async def get_extraction_by_id(extraction_id: str) -> dict | None:
+    """
+    Queries extractions table for a single row by id.
+    """
+    client = get_supabase_client()
+    
+    response = await asyncio.to_thread(
+        client.table("extractions")
+        .select("*")
+        .eq("id", extraction_id)
+        .execute
+    )
+    
+    if response.data:
+        return response.data[0]
+    return None
+
+

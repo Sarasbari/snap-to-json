@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from app.schemas.invoice import InvoiceData, LineItem
-from app.db.supabase_client import save_extraction, get_extractions
+from app.db.supabase_client import save_extraction, get_extractions, get_extraction_by_id
 
 @pytest.mark.asyncio
 async def test_save_extraction():
@@ -81,3 +81,39 @@ async def test_get_extractions():
         mock_client.table.return_value.select.return_value.order.assert_called_once_with("created_at", desc=True)
         mock_client.table.return_value.select.return_value.order.return_value.limit.assert_called_once_with(10)
 
+@pytest.mark.asyncio
+async def test_get_extraction_by_id_found():
+    # 1. Mock client response
+    mock_client = MagicMock()
+    mock_execute = MagicMock()
+    mock_execute.return_value.data = [{"id": "uuid-123", "filename": "test.png"}]
+    
+    mock_client.table.return_value.select.return_value.eq.return_value.execute = mock_execute
+    
+    # 2. Patch get_supabase_client
+    with patch("app.db.supabase_client.get_supabase_client", return_value=mock_client):
+        result = await get_extraction_by_id("uuid-123")
+        
+        # Verify result
+        assert result == {"id": "uuid-123", "filename": "test.png"}
+        
+        # Verify query flow
+        mock_client.table.assert_called_once_with("extractions")
+        mock_client.table.return_value.select.assert_called_once_with("*")
+        mock_client.table.return_value.select.return_value.eq.assert_called_once_with("id", "uuid-123")
+
+@pytest.mark.asyncio
+async def test_get_extraction_by_id_not_found():
+    # 1. Mock client response
+    mock_client = MagicMock()
+    mock_execute = MagicMock()
+    mock_execute.return_value.data = []
+    
+    mock_client.table.return_value.select.return_value.eq.return_value.execute = mock_execute
+    
+    # 2. Patch get_supabase_client
+    with patch("app.db.supabase_client.get_supabase_client", return_value=mock_client):
+        result = await get_extraction_by_id("uuid-123")
+        
+        # Verify result is None
+        assert result is None

@@ -1,25 +1,49 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, HTTPException, status
 from app.schemas.response import APIResponse
-from app.schemas.invoice import InvoiceData
-from typing import List
+from app.db import supabase_client as db
 
 router = APIRouter()
 
-@router.get("/history", response_model=APIResponse[List[InvoiceData]])
-async def get_history():
+@router.get("/history", response_model=APIResponse[list])
+async def get_history(limit: int = Query(default=20, ge=1, le=100)):
     """
     Endpoint to retrieve history of parsed invoices from Supabase.
     """
-    # Stub response
-    stub_list = [
-        InvoiceData(
-            invoice_number="INV-STUB-001",
-            vendor="Acme Corp",
-            line_items=[]
+    try:
+        extractions = await db.get_extractions(limit)
+        return APIResponse(
+            success=True,
+            data=extractions,
+            error=None
         )
-    ]
-    return APIResponse(
-        success=True,
-        data=stub_list,
-        processing_time_ms=45.2
-    )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve history: {str(e)}"
+        )
+
+@router.get("/history/{extraction_id}", response_model=APIResponse[dict])
+async def get_extraction(extraction_id: str):
+    """
+    Endpoint to retrieve a single parsed invoice extraction by ID.
+    """
+    try:
+        extraction = await db.get_extraction_by_id(extraction_id)
+        if not extraction:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Extraction with ID {extraction_id} not found"
+            )
+        return APIResponse(
+            success=True,
+            data=extraction,
+            error=None
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve extraction: {str(e)}"
+        )
+

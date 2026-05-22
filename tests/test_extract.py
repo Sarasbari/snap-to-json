@@ -13,8 +13,10 @@ def test_read_root():
 def test_extract_success():
     # Mock extract_invoice_data returning a valid raw JSON string
     mock_raw_json = '{"vendor": "Acme Corp", "invoice_number": "INV-12345", "total_amount": 1200.5}'
-    with patch("app.api.v1.extract.extract_invoice_data", new_callable=AsyncMock) as mock_extract:
+    with patch("app.api.v1.extract.extract_invoice_data", new_callable=AsyncMock) as mock_extract, \
+         patch("app.api.v1.extract.save_extraction", new_callable=AsyncMock) as mock_save:
         mock_extract.return_value = mock_raw_json
+        mock_save.return_value = {"id": "dummy-uuid"}
         
         files = {"file": ("test.png", b"dummy image bytes", "image/png")}
         response = client.post("/api/v1/extract", files=files)
@@ -30,6 +32,9 @@ def test_extract_success():
         
         # Verify extract_invoice_data was called with correct args
         mock_extract.assert_called_once_with(b"dummy image bytes", "image/png")
+        # Verify save_extraction was called
+        mock_save.assert_called_once()
+
 
 def test_extract_invalid_file_type():
     files = {"file": ("test.txt", b"plain text content", "text/plain")}

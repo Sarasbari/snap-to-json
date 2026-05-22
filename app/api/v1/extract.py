@@ -1,11 +1,15 @@
 from fastapi import APIRouter, UploadFile, File, status
 from fastapi.responses import JSONResponse
 import time
+import logging
 from app.config import settings
 from app.schemas.response import APIResponse
 from app.schemas.invoice import InvoiceData
 from app.services.gemini_service import extract_invoice_data, GeminiExtractionError
 from app.services.parser_service import parse_invoice_response
+from app.db.supabase_client import save_extraction
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -49,6 +53,12 @@ async def extract_invoice(file: UploadFile = File(...)):
         # 6. Call parser_service.parse_invoice_response
         invoice_data = parse_invoice_response(raw_text)
 
+        # Save extraction to Supabase database
+        try:
+            await save_extraction(file.filename, invoice_data)
+        except Exception as db_err:
+            logger.error(f"Failed to save extraction to database for file '{file.filename}': {str(db_err)}")
+
         # 7. Calculate processing_time_ms
         end_time = time.perf_counter()
         processing_time_ms = (end_time - start_time) * 1000.0
@@ -72,4 +82,5 @@ async def extract_invoice(file: UploadFile = File(...)):
                 error=str(e)
             ).model_dump()
         )
+
 
