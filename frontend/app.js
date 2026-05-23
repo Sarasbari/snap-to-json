@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalDownloadBtn = document.getElementById('modalDownloadBtn');
 
   // API configuration
-  const API_BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+  const API_BASE_URL = window.location.origin && window.location.origin.startsWith('http')
     ? '/api/v1'
     : 'http://localhost:8000/api/v1';
 
