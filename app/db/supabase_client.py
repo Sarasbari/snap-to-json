@@ -64,8 +64,9 @@ async def save_extraction(filename: str, invoice: InvoiceData) -> dict:
 
 async def get_extractions(limit: int = 20) -> list:
     """
-    Queries extractions table ordered by created_at desc. Falls back to in-memory store on connection failure.
+    Queries extractions table ordered by created_at desc. Merges with in-memory store.
     """
+    supabase_data = []
     try:
         client = get_supabase_client()
         response = await asyncio.to_thread(
@@ -75,14 +76,27 @@ async def get_extractions(limit: int = 20) -> list:
             .limit(limit)
             .execute
         )
-        return response.data
+        if response.data:
+            supabase_data = response.data
     except Exception as e:
-        logger.warning(f"Supabase connection failed: {e}. Returning in-memory extractions.")
+        logger.warning(f"Supabase query failed: {e}. Returning in-memory extractions only.")
         return _in_memory_db[:limit]
+
+    # Merge both lists, prioritizing the latest records, and sort by created_at desc
+    merged = {item["id"]: item for item in _in_memory_db}
+    for item in supabase_data:
+        merged[item["id"]] = item
+
+    sorted_merged = sorted(
+        merged.values(),
+        key=lambda x: x.get("created_at", ""),
+        reverse=True
+    )
+    return sorted_merged[:limit]
 
 async def get_extraction_by_id(extraction_id: str) -> dict | None:
     """
-    Queries extractions table for a single row by id. Falls back to in-memory search on connection failure.
+    Queries extractions table for a single row by id. Falls back to in-memory search.
     """
     try:
         client = get_supabase_client()
@@ -95,8 +109,11 @@ async def get_extraction_by_id(extraction_id: str) -> dict | None:
         if response.data:
             return response.data[0]
     except Exception as e:
-        logger.warning(f"Supabase connection failed: {e}. Searching in-memory extractions.")
-        for item in _in_memory_db:
-            if item["id"] == extraction_id:
-                return item
+        logger.warning(f"Supabase query failed: {e}. Searching in-memory extractions.")
+        
+    # Fallback search in-memory database
+    for item in _in_memory_db:
+        if item["id"] == extraction_id:
+            return item
     return None
+

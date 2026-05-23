@@ -16,8 +16,8 @@ async def extract_invoice_data(image_bytes: bytes, mime_type: str) -> dict:
         # 1. Init Gemini client using settings.GEMINI_API_KEY
         genai.configure(api_key=settings.GEMINI_API_KEY)
         
-        # 2. Use model: "gemini-1.5-flash"
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        # 2. Use model: "gemini-2.5-flash"
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         # 3. Build a prompt
         schema = json.dumps(InvoiceData.model_json_schema(), indent=2)

@@ -23,8 +23,8 @@ async def test_extract_invoice_data_success():
         # Verify 1. Init Gemini client using settings.GEMINI_API_KEY
         mock_configure.assert_called_once()
         
-        # Verify 2. Use model: "gemini-1.5-flash"
-        mock_model_class.assert_called_once_with("gemini-1.5-flash")
+        # Verify 2. Use model: "gemini-2.5-flash"
+        mock_model_class.assert_called_once_with("gemini-2.5-flash")
         
         # Verify 4. Send image as inline_data with correct base64 data
         mock_model.generate_content_async.assert_called_once()
